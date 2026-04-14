@@ -3,6 +3,7 @@ import { expect } from "chai";
 import { assert } from "console";
 import { MyToken } from "../typechain-types";
 import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
+import { sign } from "crypto";
 
 const mintingAmount = 100n;
 const decimals = 18n;
@@ -86,6 +87,52 @@ describe("MyToken deploy", () => {
           signer1.address,
         ),
       ).to.be.revertedWith("insufficient balance");
+    });
+  });
+  describe("TransferFrom", () => {
+    it("should emit Approval event", async () => {
+      const signer1 = signers[1];
+      await expect(
+        myTokenC.approve(
+          signer1.address,
+          hre.ethers.parseUnits("10", decimals),
+        ),
+      )
+        .to.emit(myTokenC, "Approval")
+        .withArgs(signer1.address, hre.ethers.parseUnits("10", decimals));
+    });
+
+    it("should be reverted with insufficient allowance error", async () => {
+      const signer0 = signers[0];
+      const signer1 = signers[1];
+      await expect(
+        myTokenC
+          .connect(signer1)
+          .transferFrom(
+            signer0.address,
+            signer1.address,
+            hre.ethers.parseUnits("1", decimals),
+          ),
+      ).to.be.revertedWith("insufficient allowance");
+    });
+    it("should transfer tokens with transferFrom", async () => {
+      const signer0 = signers[0];
+      const signer1 = signers[1];
+      const transferAmount = hre.ethers.parseUnits("10", decimals);
+      // approve
+      await myTokenC.approve(signer1.address, transferAmount);
+      // transferFrom
+      await myTokenC
+        .connect(signer1)
+        .transferFrom(signer0.address, signer1.address, transferAmount);
+
+      // check balance
+      //signer1 balance
+      expect(await myTokenC.balanceOf(signer1.address)).equal(transferAmount);
+
+      //signer0 balance
+      const expectedBalance = mintingAmount * 10n ** decimals - transferAmount;
+      expect(await myTokenC.balanceOf(signer0.address)).equal(expectedBalance);
     });
   });
 });
