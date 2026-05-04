@@ -43,4 +43,14 @@ describe("TinyBank", () => {
       );
     });
   });
+  describe("withdraw", () => {
+    it("should return 0 staked amount", async () => {
+      const signer0 = signers[0];
+      const stakingAmount = hre.ethers.parseUnits("50", DECIMALS);
+      await myTokenC.approve(await tinyBankC.getAddress(), stakingAmount);
+      await tinyBankC.stake(stakingAmount);
+      await tinyBankC.withdraw(stakingAmount);
+      expect(await tinyBankC.staked(signer0.address)).equal(0);
+    });
+  });
 });
