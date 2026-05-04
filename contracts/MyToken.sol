@@ -6,7 +6,7 @@ contract MyToken {
     event Approval(address indexed spender, uint256 amount);
 
     address public owner;
-    address public mgr;
+    address public manager;
     string public name;
     string public symbol;
     // uint8 -> 8 bit unsigned int
@@ -18,6 +18,7 @@ contract MyToken {
 
     constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _amount) {
         owner = msg.sender;
+        manager = msg.sender;
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -29,8 +30,8 @@ contract MyToken {
         _;
     }
 
-    modifier onlymgr() {
-        require(msg.sender == mgr, "You are not manageble");
+    modifier onlyManager() {
+        require(msg.sender == manager, "You are not authorized to manage this token");
         _;
     }
 
@@ -49,12 +50,12 @@ contract MyToken {
         
     }
 
-    function mint(uint256 amount, address to) external onlymgr {
+    function mint(uint256 amount, address to) external onlyManager {
         _mint(amount, to);
     }
 
-    function setMgr(address manager) external onlyOwner {
-        mgr = manager;
+    function setManager(address _manager) external onlyOwner {
+        manager = _manager;
     }
 
     function _mint(uint256 amount, address to) internal {

@@ -42,13 +42,21 @@ describe("MyToken deploy", () => {
       );
     });
 
+    // owner 가 최초 배포자 signer0이 Minting 하는 테스트 케이스 만들기
+    it("should allow owner to mint tokens", async () => {
+      const owner = signers[0];
+      const mintingAmount = hre.ethers.parseUnits("100", DECIMALS);
+      await expect(myTokenC.connect(owner).mint(mintingAmount, owner.address))
+        .not.to.be.reverted;
+    });
+
     // TDD: Test Driven Development
     it("should return or revert when minting infinitly", async () => {
       const hacker = signers[2];
       const mintingAgainAmount = hre.ethers.parseUnits("10000", DECIMALS);
       await expect(
         myTokenC.connect(hacker).mint(mintingAgainAmount, hacker.address),
-      ).to.be.revertedWith("You are not authorized");
+      ).to.be.revertedWith("You are not authorized to manage this token");
     });
 
     describe("Transfer", () => {
