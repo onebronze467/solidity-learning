@@ -36,7 +36,6 @@ contract TinyBank {
     IMyToken public stakingToken;
 
     mapping(address => uint256) public lastClamimBlock;
-    address[] public stakedUsers;
     uint256 rewardPerBlock = 1 * 10 ** 18;
 
     mapping(address => uint256) public staked;
@@ -47,40 +46,29 @@ contract TinyBank {
     }
 
     // who, when?
-    function distrbuteReward() internal {
-        for(uint i = 0; i < stakedUsers.length; i++) {
-            uint256 blocks = block.number - lastClamimBlock[stakedUsers[i]];
-            uint256 reward = (blocks * rewardPerBlock * staked[stakedUsers[i]]) / totalStaked;
-            stakingToken.mint(reward, stakedUsers[i]);
-            lastClamimBlock[stakedUsers[i]] = block.number;
-        }
+    function distrbuteReward(address to) internal {
+        uint256 blocks = block.number - lastClamimBlock[to];
+        uint256 reward = (blocks * rewardPerBlock * staked[to]) / totalStaked;
+        stakingToken.mint(reward, to);
+        lastClamimBlock[to] = block.number;
     }
 
     function stake(uint256 _amount) external {
         require(_amount > 0, "cannot stake 0 amount");
+        distrbuteReward(msg.sender);
         stakingToken.transferFrom(msg.sender, address(this), _amount);
         staked[msg.sender] += _amount;
         totalStaked += _amount;
-        stakedUsers.push(msg.sender);
         emit Staked(msg.sender, _amount);
     }
 
     function withdraw(uint256 _amount) external {
         require(staked[msg.sender] >= _amount, "insufficient staked token");
+        distrbuteReward(msg.sender);
         stakingToken.transfer(_amount, msg.sender);
         staked[msg.sender] -= _amount;
         totalStaked -= _amount;
-        if(staked[msg.sender] == 0) {
-            uint256 index;
-            for(uint i = 0; i < stakedUsers.length; i++) {
-                if(stakedUsers[i] == msg.sender) {
-                    index = i;
-                    break;
-                }
-            }
-            stakedUsers[index] = stakedUsers[stakedUsers.length - 1];
-            stakedUsers.pop();
-        }
+    
         emit Withdraw(_amount, msg.sender);
     }
 }
