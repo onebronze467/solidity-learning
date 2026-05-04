@@ -5,6 +5,8 @@ contract MyToken {
     event Transfer(address indexed from, address indexed to, uint256 value);
     event Approval(address indexed spender, uint256 amount);
 
+    address public owner;
+    address public mgr;
     string public name;
     string public symbol;
     // uint8 -> 8 bit unsigned int
@@ -15,10 +17,21 @@ contract MyToken {
     mapping (address => mapping (address => uint256)) public allowance;
 
     constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _amount) {
+        owner = msg.sender;
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
         _mint(_amount * 10 ** uint256(decimals), msg.sender); // 1 MT
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "You are not authorized");
+        _;
+    }
+
+    modifier onlymgr() {
+        require(msg.sender == mgr, "You are not manageble");
+        _;
     }
 
     function approve(address spender, uint256 amount) external {
@@ -36,15 +49,19 @@ contract MyToken {
         
     }
 
-    function mint(uint256 amount, address owner) external {
-        _mint(amount, owner);
+    function mint(uint256 amount, address to) external onlymgr {
+        _mint(amount, to);
     }
 
-    function _mint(uint256 amount, address owner) internal {
-        totalSupply += amount;
-        balanceOf[owner] += amount;
+    function setMgr(address manager) external onlyOwner {
+        mgr = manager;
+    }
 
-        emit Transfer(address(0), owner, amount);
+    function _mint(uint256 amount, address to) internal {
+        totalSupply += amount;
+        balanceOf[to] += amount;
+
+        emit Transfer(address(0), to, amount);
     }
 
     function transfer(uint256 amount, address to) external {

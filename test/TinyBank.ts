@@ -44,7 +44,7 @@ describe("TinyBank", () => {
     });
   });
   describe("withdraw", () => {
-    it("should return 0 staked amount", async () => {
+    it("should return 0 staked after withdrawing total token:", async () => {
       const signer0 = signers[0];
       const stakingAmount = hre.ethers.parseUnits("50", DECIMALS);
       await myTokenC.approve(await tinyBankC.getAddress(), stakingAmount);
