@@ -36,13 +36,16 @@ contract TinyBank {
     IMyToken public stakingToken;
 
     mapping(address => uint256) public lastClamimBlock;
-    uint256 rewardPerBlock = 1 * 10 ** 18;
+    
+    uint256 defaultRewardPerBlock = 1 * 10 ** 18;
+    uint256 rewardPerBlock;
 
     mapping(address => uint256) public staked;
     uint256 public totalStaked;
 
     constructor(IMyToken _stakingToken) {
         stakingToken = _stakingToken;
+        rewardPerBlock = defaultRewardPerBlock;
     }
 
     // who, when?
@@ -55,6 +58,11 @@ contract TinyBank {
         }
         lastClamimBlock[to] = block.number;
         _; // caller's code
+    }
+
+    function setRewardPerBlock(uint256 _amount) external {
+        rewardPerBlock = _amount;
+        
     }
 
     function stake(uint256 _amount) external updateReward(msg.sender) {
