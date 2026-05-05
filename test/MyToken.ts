@@ -9,11 +9,15 @@ describe("MyToken deploy", () => {
   let signers: HardhatEthersSigner[];
   beforeEach("should deploy", async () => {
     signers = await hre.ethers.getSigners();
+
+    const managerAddresses = signers.slice(0, 3).map((s) => s.address);
+
     myTokenC = await hre.ethers.deployContract("MyToken", [
       "MyToken",
       "MT",
       DECIMALS,
       MINTING_AMOUNT,
+      managerAddresses,
     ]);
   });
   describe("Basic state value check", () => {
@@ -42,7 +46,6 @@ describe("MyToken deploy", () => {
       );
     });
 
-    // owner 가 최초 배포자 signer0이 Minting 하는 테스트 케이스 만들기
     it("should allow owner to mint tokens", async () => {
       const owner = signers[0];
       const mintingAmount = hre.ethers.parseUnits("100", DECIMALS);
@@ -50,13 +53,12 @@ describe("MyToken deploy", () => {
         .not.to.be.reverted;
     });
 
-    // TDD: Test Driven Development
     it("should return or revert when minting infinitly", async () => {
-      const hacker = signers[2];
+      const hacker = signers[3];
       const mintingAgainAmount = hre.ethers.parseUnits("10000", DECIMALS);
       await expect(
         myTokenC.connect(hacker).mint(mintingAgainAmount, hacker.address),
-      ).to.be.revertedWith("You are not authorized to manage this contract");
+      ).to.be.revertedWith("You are not a manager");
     });
 
     describe("Transfer", () => {
@@ -131,18 +133,13 @@ describe("MyToken deploy", () => {
         const signer0 = signers[0];
         const signer1 = signers[1];
         const transferAmount = hre.ethers.parseUnits("10", DECIMALS);
-        // approve
         await myTokenC.approve(signer1.address, transferAmount);
-        // transferFrom
         await myTokenC
           .connect(signer1)
           .transferFrom(signer0.address, signer1.address, transferAmount);
 
-        // check balance
-        //signer1 balance
         expect(await myTokenC.balanceOf(signer1.address)).equal(transferAmount);
 
-        //signer0 balance
         const expectedBalance =
           MINTING_AMOUNT * 10n ** DECIMALS - transferAmount;
         expect(await myTokenC.balanceOf(signer0.address)).equal(

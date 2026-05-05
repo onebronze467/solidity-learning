@@ -16,7 +16,7 @@ contract MyToken is ManagedAccess {
     mapping(address => uint256) public balanceOf;
     mapping (address => mapping (address => uint256)) public allowance;
 
-    constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _amount) ManagedAccess(msg.sender, msg.sender) {
+    constructor(string memory _name, string memory _symbol, uint8 _decimals, uint256 _amount, address[] memory _managers) ManagedAccess(_managers){
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
@@ -43,8 +43,12 @@ contract MyToken is ManagedAccess {
         _mint(amount, to);
     }
 
-    function setManager(address _manager) external onlyOwner {
-        manager = _manager;
+    function setManager(address _newManager) external onlyAllConfirmed {
+        require(_newManager != address(0), "Invalid address");
+        require(!isManager[_newManager], "Already a manager");
+        
+        isManager[_newManager] = true;
+        managers.push(_newManager);
     }
 
     function _mint(uint256 amount, address to) internal {
